@@ -30,7 +30,7 @@ const settingsTemplate = {
     values: [
       {name: "option 1", value: "op. 1"}, //returns "op. 1" when clicked
       {name: "option 2"}, //returns "option 2" when clicked
-      {name: "option 3"},
+      {name: "option 3", html: "<div>hello</div>"}, //html replaces the name of the options with custom html
     ],
     callback: (newVal, oldVal) => {console.log(oldVal, newVal);},
     callbackFreq: "click", //if click, triggers callback every time a radio button is CLICKED, otherwise every time the value CHANGES

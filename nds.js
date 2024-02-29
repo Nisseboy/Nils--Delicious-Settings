@@ -36,7 +36,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
           let value = template.values[i];
 
           elemString += `
-          <button class="setting-value radio-row${(i == val)?" checked":""}">${value.name}</button>
+          <button class="setting-value radio-row${(i == val)?" checked":""}">${value.html || value.name}</button>
           `;
         }
         break;
