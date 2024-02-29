@@ -259,7 +259,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
 
 .setting:has(>.checkbox):hover,
 .setting:has(>.button):hover {
-  background-color: color-mix(in srgb, var(--row-color) 50%, var(--menu-color));
+  background-color: color-mix(in srgb, var(--row-color) 50%, #000);
   cursor: pointer;
 }
 
