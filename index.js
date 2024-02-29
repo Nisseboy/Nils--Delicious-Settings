@@ -1,7 +1,8 @@
+//Settings is the object you can access the values from, you can also initialize the values like this for them to be the default values if you want to save/load settings
 let settings = {
   checkbox: true,
   range: 0.3,
-  radio: "op. 1", //in this case it could be "op. 1", "option 1", "option 2", or "option 3"
+  radio: "op. 1", //in this case it could be "op. 1", "option 2", or "option 3"
   folder: {
     checkbox: true,
     range: 50,
