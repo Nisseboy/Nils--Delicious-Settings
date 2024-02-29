@@ -156,7 +156,8 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
             rowElem.getElementsByClassName("checked")[0].classList.remove("checked");
             elem.classList.add("checked");
 
-            let value = template.values[i].value ||template.values[i].name;
+            let value = template.values[i].value;
+            if (value == undefined) value = template.values[i].name;
             if (settings[name] == value && template.callbackFreq != "click") return;
             let old = settings[name];
             settings[name] = value;
