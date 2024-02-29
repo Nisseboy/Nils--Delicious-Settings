@@ -4,7 +4,7 @@ Example Usage
 ```html
 <!DOCTYPE html>
 <head>
-  <script src="[nds.js](https://cdn.jsdelivr.net/gh/Nisseboy/Nils--Delicious-Settings@master/nds.js)"></script>
+  <script src="https://cdn.jsdelivr.net/gh/Nisseboy/Nils--Delicious-Settings@master/nds.js"></script>
 </head>
 <body>
   <div id="settings"></div>
