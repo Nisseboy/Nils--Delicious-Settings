@@ -74,7 +74,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
     switch(template.type) {
       case "checkbox":
         elem.addEventListener("click", e => {
-          template.callback(elem.checked, settings[name]);
+          if (template.callback) template.callback(elem.checked, settings[name]);
           settings[name] = elem.checked;
         });
         break;
@@ -113,7 +113,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
           
           if (settings[name] == value) return;
           if (!(template.callbackFreq == "end" && !end)) {
-            template.callback(value, settings[name]);
+            if (template.callback) template.callback(value, settings[name]);
             settings[name] = value;
           }
         }
@@ -158,7 +158,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
 
             let value = template.values[i].value ||template.values[i].name;
             if (settings[name] == value && template.callbackFreq != "click") return;
-            template.callback(value, settings[name]);
+            if (template.callback) template.callback(value, settings[name]);
             settings[name] = value;
           });
         }
@@ -166,7 +166,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
         
       case "button":
         elem.addEventListener("click", e => {
-          template.callback();
+          if (template.callback) template.callback();
         });
         break;
         
