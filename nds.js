@@ -36,7 +36,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
           let value = template.values[i];
 
           elemString += `
-          <button class="setting-value radio-row${(i == val)?" checked":""}">${value.html || value.name}</button>
+          <button class="setting-value radio-row${(value.value == val || value.name == val)?" checked":""}">${value.html || value.name}</button>
           `;
         }
         break;
@@ -149,8 +149,6 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
         break;
     
       case "radio":
-        settings[name] = template.values[val].value || template.values[val].name;
-        
         let elems = rowElem.getElementsByClassName("radio-row");
         for (let i = 0; i < elems.length; i++) {
           let elem = elems[i];

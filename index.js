@@ -1,7 +1,7 @@
 let settings = {
   checkbox: true,
   range: 0.3,
-  radio: 1,
+  radio: "op. 1", //in this case it could be "op. 1", "option 1", "option 2", or "option 3"
   folder: {
     checkbox: true,
     range: 50,
@@ -26,7 +26,7 @@ const settingsTemplate = {
   },
   radio: {
     type: "radio",
-    defaultValue: 0, //index in value array
+    defaultValue: "op. 1",
     values: [
       {name: "option 1", value: "op. 1"}, //returns "op. 1" when clicked
       {name: "option 2"}, //returns "option 2" when clicked
