@@ -1,6 +1,18 @@
 Small library for simple settings menus
 
 Example Usage
+```html
+<!DOCTYPE html>
+<head>
+  <script src="[nds.js](https://cdn.jsdelivr.net/gh/Nisseboy/Nils--Delicious-Settings@master/nds.js)"></script>
+</head>
+<body>
+  <div id="settings"></div>
+  <script src="index.js"></script>
+</body>
+</html>
+```
+
 ```js
 //Settings is the object you can access the values from, you can also initialize the values like this for them to be the default values if you want to save/load settings
 let settings = {
