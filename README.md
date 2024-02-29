@@ -7,6 +7,7 @@ Example Usage
   <script src="https://cdn.jsdelivr.net/gh/Nisseboy/Nils--Delicious-Settings@master/nds.js"></script>
 </head>
 <body>
+  The id of the settings element has to be "settings"
   <div id="settings"></div>
   <script src="index.js"></script>
 </body>
