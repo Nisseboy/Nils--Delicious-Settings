@@ -189,8 +189,8 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "")
   stylesElem.innerText = `
   
 #settings {
-  --menu-color: #000;
-  --row-color: #191919;
+  --menu-color: #191919;
+  --row-color: var(--menu-color);
   --input-background: #262626;
   --text-color: #fff;
   
