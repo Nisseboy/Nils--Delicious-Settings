@@ -1,6 +1,6 @@
 Small library for simple settings menus
 
-Example Usage
+#Usage
 ```html
 <!DOCTYPE html>
 <head>
@@ -81,5 +81,84 @@ const settingsTemplate = {
 
 initializeSettings(document.getElementById("settings"), settings, settingsTemplate);
 ```
-this will produce this menu
+This will produce this menu
 ![alt text](image.png)
+
+
+#Custom Types
+Implementation of number input (this can be applied to anything). You can check more advanced usage in nds.js in the variable ndsTypes
+```js
+let settings = {};
+let settingsTemplate = {
+  age: {
+    type: "number",
+    defaultValue: 25,
+    min: 0,
+    max: 100,
+    step: 1, //the precision the value is rounded to
+    maxDecimals: 0, //how many decimals the value can have
+    callback: (newVal, oldVal) => {console.log(oldVal, newVal);},
+  },
+};
+
+ndsTypes["number"] = {
+  domElemRowIsLabel: false,
+
+  createElement: function(template, name, value, uniqueID) {
+    return `
+      <input class="setting-value number" value="${value}">
+    `;
+  },
+  hydrateElement: function(domElem, template, name, settings, uniqueID) {
+    domElem.addEventListener("change", e => {
+      let value = Math.round(Math.max(Math.min(parseFloat(domElem.value), template.max), template.min) / template.step) * template.step;
+      
+      let str = ("" + value);
+      let str2 = "";
+      let decimalI = -1;
+      for (let i = 0; i < str.length; i++) {
+        if (str[i] == ".") decimalI = 0;
+
+        if (decimalI - 1 > template.maxDecimals - 1) break;
+        str2 += str[i];
+        if (decimalI != -1) decimalI++;
+      }
+
+      domElem.value = value;
+      domElem.blur();
+      
+      if (settings[name] == value) return;
+      let old = settings[name];
+      settings[name] = value;
+      if (template.callback) template.callback(value, old);
+    });
+  },
+
+  styles: `
+  .setting-side.number { background-color: var(--input-theme-range); }
+
+  .setting-value.number:hover {
+    filter: brightness(1.2);
+  }
+
+  .setting-value.number {
+    border: none;
+    background-color: var(--input-background);
+    color: var(--input-theme-range);
+    font-family: inherit;
+    font-size: 1rem;
+  
+    outline: none;
+  
+    width: 100%;
+  }
+  .setting-value.number:focus {
+    color: var(--text-color);
+  }
+  `,
+};
+
+initializeSettings(document.getElementById("settings"), settings, settingsTemplate);
+```
+This will produce this menu
+![alt text](image-1.png)

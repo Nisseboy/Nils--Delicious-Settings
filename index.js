@@ -1,6 +1,6 @@
 //Settings is the object you can access the values from, you can also initialize the values like this for them to be the default values if you want to save/load settings
 let settings = {
-  checkbox: true,
+  checkbox: false,
   range: 0.3,
   radio: "op. 1", //in this case it could be "op. 1", "option 2", or "option 3"
   folder: {
@@ -25,6 +25,21 @@ const settingsTemplate = {
     callback: (newVal, oldVal) => {console.log(oldVal, newVal);},
     callbackFreq: "end", //if end, triggers callback when number changes or the slider is released, otherwise when number changes and every frame the slider is changed
   },
+  number: {
+    type: "number",
+    defaultValue: 0.75,
+    min: 0,
+    max: 1,
+    step: 0.01, //the precision the value is rounded to
+    maxDecimals: 2, //how many decimals the value can have
+    callback: (newVal, oldVal) => {console.log(oldVal, newVal);},
+  },
+  string: {
+    type: "string",
+    defaultValue: "Example",
+    maxLength: 10, //max length of the string
+    callback: (newVal, oldVal) => {console.log(oldVal, newVal);},
+  },
   radio: {
     type: "radio",
     defaultValue: "op. 1",
@@ -38,7 +53,7 @@ const settingsTemplate = {
   },
   folder: {
     type: "folder",
-    defaultValue: true, //false is closed, true is open
+    startOpen: true,
     settings: {
       checkbox: {
         type: "checkbox",
