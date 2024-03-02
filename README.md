@@ -99,6 +99,34 @@ initializeSettings(document.getElementById("settings"), settings, settingsTempla
 This will produce this menu
 ![alt text](image.png)
 
+You can change the styling of the menu like this.
+```css
+#settings {
+  --menu-color: #ff0000 !important;
+  --row-color: var(--menu-color);
+  --input-background: #ff0000 !important;
+  --text-color: #ff0000 !important;
+
+  --reset-color: #ff0000 !important;
+  
+  --input-theme-checkbox: #ff0000 !important;
+  --input-theme-range: #ff0000 !important;
+  --input-theme-radio: #ff0000 !important;
+  --input-theme-button: #ff0000 !important;
+  --input-theme-string: #ff0000 !important;
+  
+  width: 50rem !important;
+
+  font-family: monospace,s !important;
+
+  opacity: 0.1 !important;
+
+  /*Move the menu to the left side*/
+  right: unset;
+  left: 0.2rem;
+}
+```
+
 # Custom Types
 Implementation of number input (this can be applied to anything). You can check more advanced usage in nds.js in the variable ndsTypes
 ```js
@@ -116,17 +144,22 @@ let settingsTemplate = {
 };
 
 ndsTypes["number"] = {
-  domElemRowIsLabel: false,
+  domElemRowIsLabel: false, //Should the row element be a label so clicking it also clicks the button? check the implementation of checkbox for more info
+  canBeReset: true, //Should a reset button pop up next to it if the value isn't it's default?
 
-  createElement: function(template, name, value, uniqueID) {
+  //Return your element, shouldn't include values
+  createElement: function(template, name, uniqueID) {
     return `
-      <input class="setting-value number" value="${value}">
+      <input class="setting-value number">
     `;
   },
-  hydrateElement: function(domElem, template, name, settings, uniqueID) {
+  //Javsacriptify your element
+  hydrateElement: function(domElem, template, name, settings, setValueFn, uniqueID) {
     domElem.addEventListener("change", e => {
+      //Ensures value is within bounds and follows step
       let value = Math.round(Math.max(Math.min(parseFloat(domElem.value), template.max), template.min) / template.step) * template.step;
       
+      //Removes trailing decimals
       let str = ("" + value);
       let str2 = "";
       let decimalI = -1;
@@ -138,17 +171,24 @@ ndsTypes["number"] = {
         if (decimalI != -1) decimalI++;
       }
 
-      domElem.value = value;
+      //Unfocus element after input
       domElem.blur();
       
+      //Don't run the callback if the value hasn't changed
       if (settings[name] == value) return;
-      let old = settings[name];
-      settings[name] = value;
-      if (template.callback) template.callback(value, old);
+
+      //Call this function to set the setting value, this will call your setValue function, potentially call the callback and initialize reset buttons etc
+      setValueFn(value);
     });
   },
+  //Define how nds should display your value, also called right after before
+  setValue: function(domElem, template, name, value) {
+    domElem.value = value;
+  },
 
+  //Custom styles for your element
   styles: `
+  /*What color the bar beside the row is*/
   .setting-side.number { background-color: var(--input-theme-range); }
 
   .setting-value.number:hover {

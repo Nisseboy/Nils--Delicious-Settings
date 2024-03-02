@@ -14,7 +14,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "nd
 
     let uniqueID = prefix + "-" + name;
     let ndsType = ndsTypes[template.type];
-    let elemString = ndsType.createElement(template, name, val, uniqueID);
+    let elemString = ndsType.createElement(template, name, uniqueID);
 
     let rowElemString = `
     ${ndsType.domElemRowIsLabel?`<label class="setting" for="${uniqueID}">`:`<div class="setting">`}
@@ -26,8 +26,10 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "nd
       <div class="setting-box">
       
       </div>
+      <button class="reset-button${(val != template.defaultValue && ndsType.canBeReset)?" visible":""}">↺</button>
     ${ndsType.domElemRowIsLabel?"</label>":"</div>"}
     `;
+
     parentElem.insertAdjacentHTML("beforeend", rowElemString);
     let rowElem = parentElem.lastElementChild;
 
@@ -35,7 +37,23 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "nd
     settingBox.insertAdjacentHTML("beforeend", elemString);
     let elem = settingBox.lastElementChild;
 
-    ndsType.hydrateElement(elem, template, name, settings, uniqueID);
+    let resetButton = rowElem.getElementsByClassName("reset-button")[0];
+    resetButton.addEventListener("click", e => {
+      resetButton.classList.remove("visible");
+      if (ndsType.setValue) ndsType.setValue(elem, template, name, template.defaultValue);
+    });
+
+    if (ndsType.setValue) ndsType.setValue(elem, template, name, val);
+    ndsType.hydrateElement(elem, template, name, settings, (newValue) => {
+      let old = settings[name];
+      settings[name] = newValue;
+
+      if (ndsType.setValue) ndsType.setValue(elem, template, name, newValue);
+
+      resetButton.classList.toggle("visible", newValue != template.defaultValue && ndsType.canBeReset);
+
+      if (template.callback) template.callback(newValue, old);
+    }, uniqueID);
   }
 
   if (!ndsHasInit) {
@@ -46,6 +64,8 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "nd
       --row-color: var(--menu-color);
       --input-background: #262626;
       --text-color: #fff;
+
+      --reset-color: #f0514c;
       
       --input-theme-checkbox: #624e66;
       --input-theme-range: #2683ae;
@@ -57,7 +77,7 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "nd
     
       position: absolute;
       top: 0;
-      right: 1rem;
+      right: 2.1rem;
       width: 19rem;
     
       font-family: monospace,s;
@@ -102,6 +122,30 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "nd
       width: 65%;
       height: 100%;
     }
+
+    .reset-button {
+      position: absolute;
+      right: 0;
+      translate: calc(100% + 0.3rem) 0;
+      cursor: pointer;
+
+      width: 1.5rem;
+      height: 1.5rem;
+
+      background-color: var(--reset-color);
+      border: 0;
+      border-radius: 0.3rem;
+
+      font-size: 1.5rem;
+      padding: 0;
+      line-height: 1.3rem;
+
+      opacity: 0.6;
+      display: none;
+    }
+    .reset-button.visible {
+      display: grid;
+    }
     `;
     for (let i in ndsTypes) if (ndsTypes[i].styles) stylesElem.innerText += ndsTypes[i].styles;
     document.head.appendChild(stylesElem);
@@ -112,19 +156,21 @@ function initializeSettings(parentElem, settings, settingsTemplate, prefix = "nd
 let ndsTypes = {
   checkbox: {
     domElemRowIsLabel: true,
+    canBeReset: true,
 
-    createElement: function(template, name, value, uniqueID) {
+    createElement: function(template, name, uniqueID) {
       return `
       <div class="setting-value checkbox-visible"></div>
-      <input type="checkbox" id="${uniqueID}" class="setting-value checkbox" ${value?" checked":""}>
+      <input type="checkbox" id="${uniqueID}" class="setting-value checkbox">
       `;
     },
-    hydrateElement: function(domElem, template, name, settings, uniqueID) {
+    hydrateElement: function(domElem, template, name, settings, setValueFn, uniqueID) {
       domElem.addEventListener("click", e => {
-        let old = settings[name];
-        settings[name] = domElem.checked;
-        if (template.callback) template.callback(domElem.checked, old);
+        setValueFn(domElem.checked);
       });
+    },
+    setValue: function(domElem, template, name, value) {
+      domElem.checked = value;
     },
 
     styles: `
@@ -185,8 +231,9 @@ let ndsTypes = {
   },
   range: {
     domElemRowIsLabel: false,
+    canBeReset: true,
 
-    createElement: function(template, name, value, uniqueID) {
+    createElement: function(template, name, uniqueID) {
       return `
       <div class="setting-value range-holder">
         <div class="setting-value range">
@@ -197,14 +244,11 @@ let ndsTypes = {
       </div>
       `;
     },
-    hydrateElement: function(domElem, template, name, settings, uniqueID) {
+    hydrateElement: function(domElem, template, name, settings, setValueFn, uniqueID) {
       let range = (template.max - template.min);
 
       let numElem = domElem.getElementsByClassName("number")[0];
       let elem = domElem.getElementsByClassName("range")[0];
-
-      numElem.value = settings[name];
-      elem.style.setProperty("--range-fullness", (settings[name] - template.min) / range * 100 + "%");
 
       let bounding = {box: {x:0,width:0}};
 
@@ -224,16 +268,12 @@ let ndsTypes = {
 
         value = parseFloat(str2);
 
-        elem.style.setProperty("--range-fullness", (value - template.min) / range * 100 + "%");
-        numElem.value = value;
-
         numElem.blur();
         
         if (settings[name] == value) return;
+        ndsTypes.range.setValue(domElem, template, name, value);
         if (!(template.callbackFreq == "end" && !end)) {
-          let old = settings[name];
-          settings[name] = value;
-          if (template.callback) template.callback(value, old);
+          setValueFn(value);
         }
       }
 
@@ -262,6 +302,14 @@ let ndsTypes = {
       numElem.addEventListener("change", e => {
         setValue(numElem.value, true);
       });
+    },
+    setValue: function(domElem, template, name, value) {
+      let numElem = domElem.getElementsByClassName("number")[0];
+      let elem = domElem.getElementsByClassName("range")[0];
+      let range = (template.max - template.min);
+
+      numElem.value = value;
+      elem.style.setProperty("--range-fullness", (value - template.min) / range * 100 + "%");
     },
 
     styles: `
@@ -297,34 +345,38 @@ let ndsTypes = {
   },
   radio: {
     domElemRowIsLabel: false,
+    canBeReset: true,
 
-    createElement: function(template, name, value, uniqueID) {
+    createElement: function(template, name, uniqueID) {
       
       let elem = "";
       for (let i in template.values) {
         let val = template.values[i];
 
         elem += `
-        <button class="setting-value radio-row${(val.value == value || val.name == value)?" checked":""}">${val.html || val.name}</button>
+        <button class="setting-value radio-row">${val.html || val.name}</button>
         `;
       }
       return elem;
     },
-    hydrateElement: function(domElem, template, name, settings, uniqueID) {
+    hydrateElement: function(domElem, template, name, settings, setValueFn, uniqueID) {
       let elems = domElem.parentElement.getElementsByClassName("radio-row");
       for (let i = 0; i < elems.length; i++) {
         let elem = elems[i];
         elem.addEventListener("click", e => {
-          domElem.parentElement.getElementsByClassName("checked")[0].classList.remove("checked");
-          elem.classList.add("checked");
-
           let value = template.values[i].value;
           if (value == undefined) value = template.values[i].name;
           if (settings[name] == value && template.callbackFreq != "click") return;
-          let old = settings[name];
-          settings[name] = value;
-          if (template.callback) template.callback(value, old);
+          setValueFn(value);
         });
+      }
+    },
+    setValue: function(domElem, template, name, value) {
+      let elems = domElem.parentElement.getElementsByClassName("radio-row");
+      for (let i = 0; i < elems.length; i++) {
+        let elem = elems[i];
+        let val = template.values[i];
+        elem.classList.toggle("checked", val.value == value || val.name == value);
       }
     },
     
@@ -357,8 +409,9 @@ let ndsTypes = {
   },
   button: {
     domElemRowIsLabel: true,
+    canBeReset: false,
 
-    createElement: function(template, name, value, uniqueID) {
+    createElement: function(template, name, uniqueID) {
       return `
       <input type="button" id="${uniqueID}" class="setting-value button">
       `;
@@ -373,13 +426,14 @@ let ndsTypes = {
   },
   folder: {
     domElemRowIsLabel: false,
+    canBeReset: false,
 
-    createElement: function(template, name, value, uniqueID) {
+    createElement: function(template, name, uniqueID) {
       return `
       <div class="setting-value folder${template.startOpen?" open":""}"></div>
       `;
     },
-    hydrateElement: function(domElem, template, name, settings, uniqueID) {
+    hydrateElement: function(domElem, template, name, settings, setValueFn, uniqueID) {
       initializeSettings(domElem, settings[name], template.settings, uniqueID);
       domElem.parentElement.parentElement.addEventListener("click", e => {
         if (e.target == domElem.parentElement.parentElement) {
@@ -398,7 +452,7 @@ let ndsTypes = {
     }
     .setting:has(.folder.open) {
       height: auto;
-      overflow-y: auto;
+      overflow: initial;
     }
     .setting-name-folder-carat {
       width: 1rem;
@@ -423,17 +477,22 @@ let ndsTypes = {
     `,
   },
   number: {
-    domElemRowIsLabel: false,
+    domElemRowIsLabel: false, //Should the row element be a label so clicking it also clicks the button? check the implementation of checkbox for more info
+    canBeReset: true, //Should a reset button pop up next to it if the value isn't it's default?
   
-    createElement: function(template, name, value, uniqueID) {
+    //Return your element, shouldn't include values
+    createElement: function(template, name, uniqueID) {
       return `
-        <input class="setting-value number" value="${value}">
+        <input class="setting-value number">
       `;
     },
-    hydrateElement: function(domElem, template, name, settings, uniqueID) {
+    //Javsacriptify your element
+    hydrateElement: function(domElem, template, name, settings, setValueFn, uniqueID) {
       domElem.addEventListener("change", e => {
+        //Ensures value is within bounds and follows step
         let value = Math.round(Math.max(Math.min(parseFloat(domElem.value), template.max), template.min) / template.step) * template.step;
         
+        //Removes trailing decimals
         let str = ("" + value);
         let str2 = "";
         let decimalI = -1;
@@ -445,17 +504,24 @@ let ndsTypes = {
           if (decimalI != -1) decimalI++;
         }
 
-        domElem.value = value;
+        //Unfocus element after input
         domElem.blur();
         
+        //Don't run the callback if the value hasn't changed
         if (settings[name] == value) return;
-        let old = settings[name];
-        settings[name] = value;
-        if (template.callback) template.callback(value, old);
+
+        //Call this function to set the setting value, this will call your setValue function, potentially call the callback and initialize reset buttons etc
+        setValueFn(value);
       });
     },
+    //Define how nds should display your value, also called right after before
+    setValue: function(domElem, template, name, value) {
+      domElem.value = value;
+    },
   
+    //Custom styles for your element
     styles: `
+    /*What color the bar beside the row is*/
     .setting-side.number { background-color: var(--input-theme-range); }
 
     .setting-value.number:hover {
@@ -480,21 +546,23 @@ let ndsTypes = {
   },
   string: {
     domElemRowIsLabel: false,
+    canBeReset: true,
   
-    createElement: function(template, name, value, uniqueID) {
+    createElement: function(template, name, uniqueID) {
       return `
-        <input class="setting-value string" value="${value}"${(template.maxLength != undefined)?` maxlength=\"${template.maxLength}\"`:""}>
+        <input class="setting-value string"${(template.maxLength != undefined)?` maxlength=\"${template.maxLength}\"`:""}>
       `;
     },
-    hydrateElement: function(domElem, template, name, settings, uniqueID) {
+    hydrateElement: function(domElem, template, name, settings, setValueFn, uniqueID) {
       domElem.addEventListener("change", e => {
         domElem.blur();
         
         if (settings[name] == domElem.value) return;
-        let old = settings[name];
-        settings[name] = domElem.value;
-        if (template.callback) template.callback(domElem.value, old);
+        setValueFn(domElem.value);
       });
+    },
+    setValue: function(domElem, template, name, value) {
+      domElem.value = value;
     },
   
     styles: `
